@@ -10,18 +10,18 @@ import datetime
 sih = SourceImageHandler(r'/home/eshels/Downloads/london/', r'/home/eshels/Downloads/src_img')
 
 # Get a "target image" from the user
-test_img = cv2.imread(r'/home/eshels/Downloads/london/IMG_20190909_205755.jpg')
-test_img = cv2.resize(test_img, (2000, 2000))
+test_img = cv2.imread(r'/home/eshels/Downloads/london/IMG_20190903_182746.jpg')
+test_img = cv2.resize(test_img, (4000, 4000))
 
-print(len(read_dict('/home/eshels/Downloads/src_img/average_colors.json').keys()))
+# print(len(read_dict('/home/eshels/Downloads/src_img/average_colors.json').keys()))
 
-pmg = PhotoMosaicGenerator(test_img)
+pmg = PhotoMosaicGenerator(test_img, sih)
 
 pix_mat = pmg.divide_img_into_color_grid()
 
 pixellated = pmg.create_pixel_image(pix_mat)
 
-src_array = pmg.average_color_to_image(read_dict('/home/eshels/Downloads/src_img/average_colors.json'))
+src_array = pmg.average_color_to_image()
 
 
 cv2.imwrite('test_colage-{}.jpg'.format(datetime.datetime.now()), pmg.construct_mosaic(src_array))

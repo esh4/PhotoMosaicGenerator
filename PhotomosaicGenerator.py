@@ -1,14 +1,16 @@
 import numpy as np
 import cv2
 import math
+from SourceImageHandler import SourceImageHandler
 
 
 class PhotoMosaicGenerator:
-    def __init__(self, img, img_path=None, grid_res=50):
+    def __init__(self, img, src_handler: SourceImageHandler, img_path=None, grid_res=50):
         self.img_path = img_path
         self.grid_res = grid_res
         self.img = img
         self.average_color_grid = []
+        self.src_handler = src_handler
 
     def divide_img_into_color_grid(self):
         '''
@@ -41,31 +43,21 @@ class PhotoMosaicGenerator:
                 blank = np.zeros((self.grid_res, self.grid_res, 3), np.uint8)
                 blank[:] = j
                 cols.append(blank)
-
             rows.append(np.vstack(cols))
 
         pixellated_img = np.hstack(rows)
         return pixellated_img
 
-    def find_closest_src_for_color(self):
-        pass
-
-    def average_color_to_image(self, src_average_colors):
+    def average_color_to_image(self):
+        '''
+        This function creates a grid of the best matching src images
+        :return:
+        '''
         row_matches = []
         for row in self.average_color_grid:
             col_matches = []
             for col in row:
-                min_delta = math.sqrt((255**2)*3)
-                best_match = []
-                for img_hash in src_average_colors:
-                    delta = math.sqrt(
-                        (col[0] - src_average_colors[img_hash][0])**2 +
-                        (col[1] - src_average_colors[img_hash][1])**2 +
-                        (col[2] - src_average_colors[img_hash][2])**2)
-
-                    if delta < min_delta:
-                        min_delta = delta
-                        best_match = img_hash
+                best_match = self.src_handler.find_matching_img_for_average_color(col)
                 col_matches.append(best_match)
             row_matches.append(col_matches)
 
@@ -77,7 +69,7 @@ class PhotoMosaicGenerator:
         for row in img_array:
             cols = []
             for col in row:
-                src_img = cv2.imread('/home/eshels/Downloads/src_img/{}.jpg'.format(col))
+                src_img = self.src_handler.get_src_img(col)
                 src_img = cv2.resize(src_img, (self.grid_res, self.grid_res))
                 cols.append(src_img)
             rows.append(np.vstack(cols))
@@ -86,10 +78,12 @@ class PhotoMosaicGenerator:
         return img
 
 
-
-
-
 def average_color(img):
+    '''
+    find the average color of the entire img
+    :param img:
+    :return: Tuple(r, g, b)
+    '''
     counter = 0
     r = 0
     b = 0
