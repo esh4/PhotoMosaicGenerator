@@ -24,6 +24,9 @@ class SourceImageHandler:
     def create_source_img_dir(self):
         self._create_source_images(self.src_path)
 
+    def find_matching_img_for_average_color(self, average_color):
+        pass
+
 
 def find_image_paths(path):
     files = []
@@ -37,6 +40,8 @@ def find_image_paths(path):
 
 
 def save_dict(filename, data):
+    old_data = read_dict('{}.json'.format(filename))
+    data = data.update(old_data)
     with open('{}.json'.format(filename), 'a') as outfile:
         json.dump(data, outfile)
 
