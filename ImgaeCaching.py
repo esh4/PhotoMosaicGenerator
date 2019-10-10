@@ -2,11 +2,21 @@ import os
 import cv2
 import json
 import logging
-import random
+from PhotomosaicGenerator import average_color
+import numpy as np
 
 
-def diff_hash():
-    return 64
+def diff_hash(image, hashSize=8):
+    # resize the input image, adding a single column (width) so we
+    # can compute the horizontal gradient
+    resized = cv2.resize(image, (hashSize + 1, hashSize))
+
+    # compute the (relative) horizontal gradient between adjacent
+    # column pixels
+    diff: np.ndarray = resized[:, 1:] > resized[:, :-1]
+
+    # convert the difference image to a hash
+    return sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
 
 
 def find_imgs_in_dir(path):
@@ -33,7 +43,7 @@ def read_dict(filename):
     return data
 
 
-class ImageCaching:
+class ImageCaching(object):
     def __init__(self, path='src_images/'):
         try:
             os.mkdir(path)
@@ -52,15 +62,18 @@ class ImageCaching:
 
     def check_for_new_images(self):
         self.update_cache()
-        for img_path in find_imgs_in_dir(os.path.dirname(os.path.abspath(__file__))):
-            if not img_path in self.src_images_names.values():
+        for img_path in find_imgs_in_dir(self.src_dir_path):
+            if img_path not in self.src_images_names.values():
                 self.add_src_img(img_path)
                 logging.info('adding {}'.format(img_path))
         self.update_cache()
 
     def add_src_img(self, img_path):
-        cv2.imwrite(img_path, self.process_src_img(img_path))
-        self.src_images_names[diff_hash()] = img_path
+        processed_src_img = self.process_src_img(img_path)
+        cv2.imwrite(img_path, processed_src_img)
+        img_hash = diff_hash(processed_src_img)
+        self.src_images_names[img_hash] = img_path
+        self.average_colors[img_hash] = average_color(processed_src_img)
 
     def process_src_img(self, img_path):
         original = cv2.imread(img_path)
@@ -68,6 +81,7 @@ class ImageCaching:
         return resized
 
     def update_cache(self):
+        print('updating from cache...')
         for filename, data_var in self.cache_files.items():
             try:
                 stored_data = read_dict('{}.json'.format(filename))
@@ -78,7 +92,7 @@ class ImageCaching:
             save_dict('{}'.format(filename), data_var)
 
 
-
 if __name__ == '__main__':
     im_cache = ImageCaching()
     im_cache.check_for_new_images()
+    print(im_cache.average_colors)

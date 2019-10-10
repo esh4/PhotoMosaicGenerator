@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import math
-from SourceImageHandler import SourceImageHandler
 # from main import timeit
 import time
 
@@ -15,19 +14,18 @@ def timeit(method):
             name = kw.get('log_name', method.__name__.upper())
             kw['log_time'][name] = int((te - ts) * 1000)
         else:
-            print( '%r  %2.2f ms' % \
+            print( '%r  %2.2f ms' %
                   (method.__name__, (te - ts) * 1000))
         return result
     return timed
 
 
 class PhotoMosaicGenerator:
-    def __init__(self, img, src_handler: SourceImageHandler, img_path=None, grid_res=50):
+    def __init__(self, img, img_path=None, grid_res=50):
         self.img_path = img_path
         self.grid_res = grid_res
         self.img = img
         self.average_color_grid = []
-        self.src_handler = src_handler
 
     @timeit
     def divide_img_into_color_grid(self):
@@ -67,8 +65,24 @@ class PhotoMosaicGenerator:
         pixellated_img = np.hstack(rows)
         return pixellated_img
 
+    def find_matching_img_for_average_color(self, target_color, src_colors):
+        min_delta = math.sqrt((255 ** 2) * 3)
+        best_match = []
+
+        for img_hash in src_colors:
+            delta = math.sqrt(
+                (target_color[0] - src_colors[img_hash][0]) ** 2 +
+                (target_color[1] - src_colors[img_hash][1]) ** 2 +
+                (target_color[2] - src_colors[img_hash][2]) ** 2)
+
+            if delta < min_delta:
+                min_delta = delta
+                best_match = img_hash
+
+        return best_match
+
     @timeit
-    def average_color_to_image(self):
+    def average_color_to_image(self, src_colors):
         '''
         This function creates a grid of the best matching src images
         :return:
@@ -77,7 +91,7 @@ class PhotoMosaicGenerator:
         for row in self.average_color_grid:
             col_matches = []
             for col in row:
-                best_match = self.src_handler.find_matching_img_for_average_color(col)
+                best_match = self.find_matching_img_for_average_color(col, src_colors)
                 col_matches.append(best_match)
             row_matches.append(col_matches)
 

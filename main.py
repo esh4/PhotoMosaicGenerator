@@ -1,22 +1,20 @@
 import cv2
 import numpy as np
-from SourceImageHandler import SourceImageHandler
-from SourceImageHandler import *
 from PhotomosaicGenerator import *
 import datetime
-import time
+from ImgaeCaching import ImageCaching
 
 
 # Get as many images as possible from the user
-sih = SourceImageHandler(r'/home/eshels/Downloads/london/', r'/home/eshels/Downloads/src_img')
+
+img_cache = ImageCaching()
 
 # Get a "target image" from the user
 test_img = cv2.imread(r'/home/eshels/Downloads/london/IMG_20190903_182746.jpg')
 test_img = cv2.resize(test_img, (2000, 2000))
 
-# print(len(read_dict('/home/eshels/Downloads/src_img/average_colors.json').keys()))
 
-pmg = PhotoMosaicGenerator(test_img, sih)
+pmg = PhotoMosaicGenerator(test_img)
 
 pix_mat = pmg.divide_img_into_color_grid()
 
