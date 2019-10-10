@@ -28,6 +28,13 @@ class PhotoMosaicGenerator:
         self.average_color_grid = []
 
     @timeit
+    def run(self, src_colors, src_imgs):
+        pixel_mat = self.divide_img_into_color_grid()
+        pixellated = self.create_pixel_image(pixel_mat)
+        collage = self.construct_mosaic(src_colors, src_imgs)
+        return collage, pixellated
+
+    @timeit
     def divide_img_into_color_grid(self):
         '''
         This function takes the initial image and divides creates an average color grid used to construct the mosaic.
@@ -98,14 +105,14 @@ class PhotoMosaicGenerator:
         return row_matches
 
     @timeit
-    def construct_mosaic(self):
-        img_array = self.average_color_to_image()
+    def construct_mosaic(self, src_colors, src_imgs):
+        img_array = self.average_color_to_image(src_colors)
         rows = []
 
         for row in img_array:
             cols = []
             for col in row:
-                src_img = self.src_handler.get_src_img(col)
+                src_img = cv2.imread(src_imgs[col])
                 src_img = cv2.resize(src_img, (100, 100))
                 cols.append(src_img)
             rows.append(np.vstack(cols))
