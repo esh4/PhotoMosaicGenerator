@@ -2,6 +2,23 @@ import numpy as np
 import cv2
 import math
 from SourceImageHandler import SourceImageHandler
+# from main import timeit
+import time
+
+
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        if 'log_time' in kw:
+            name = kw.get('log_name', method.__name__.upper())
+            kw['log_time'][name] = int((te - ts) * 1000)
+        else:
+            print( '%r  %2.2f ms' % \
+                  (method.__name__, (te - ts) * 1000))
+        return result
+    return timed
 
 
 class PhotoMosaicGenerator:
@@ -12,6 +29,7 @@ class PhotoMosaicGenerator:
         self.average_color_grid = []
         self.src_handler = src_handler
 
+    @timeit
     def divide_img_into_color_grid(self):
         '''
         This function takes the initial image and divides creates an average color grid used to construct the mosaic.
@@ -28,6 +46,7 @@ class PhotoMosaicGenerator:
         self.average_color_grid = row_colors
         return row_colors
 
+    @timeit
     def create_pixel_image(self, avg_color_grid=None):
         '''
         This function creates a pixellated version of the original.
@@ -48,6 +67,7 @@ class PhotoMosaicGenerator:
         pixellated_img = np.hstack(rows)
         return pixellated_img
 
+    @timeit
     def average_color_to_image(self):
         '''
         This function creates a grid of the best matching src images
@@ -63,14 +83,16 @@ class PhotoMosaicGenerator:
 
         return row_matches
 
-    def construct_mosaic(self, img_array):
-        # img_array = self.average_color_to_image()
+    @timeit
+    def construct_mosaic(self):
+        img_array = self.average_color_to_image()
         rows = []
+
         for row in img_array:
             cols = []
             for col in row:
                 src_img = self.src_handler.get_src_img(col)
-                src_img = cv2.resize(src_img, (self.grid_res, self.grid_res))
+                src_img = cv2.resize(src_img, (100, 100))
                 cols.append(src_img)
             rows.append(np.vstack(cols))
         img = np.hstack(rows)
@@ -95,3 +117,6 @@ def average_color(img):
             b += img[i,j,2]
             counter += 1
     return int(r/counter), int(g/counter), int(b/counter)
+
+
+

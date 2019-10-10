@@ -2,7 +2,6 @@ import os
 import cv2
 import json
 import math
-from PhotomosaicGenerator import average_color
 
 
 class SourceImageHandler:
@@ -43,7 +42,7 @@ class SourceImageHandler:
         return best_match
 
     def get_src_img(self, img_hash):
-        cv2.imread('{}/{}.jpg'.format(self.dst_path, img_hash))
+        return cv2.imread('{}/{}.jpg'.format(self.dst_path, img_hash))
 
 
 def find_image_paths(path):
@@ -68,6 +67,25 @@ def read_dict(filename):
     with open(filename, 'r') as file:
         data = json.load(file)
     return data
+
+
+def average_color(img):
+    '''
+    find the average color of the entire img
+    :param img:
+    :return: Tuple(r, g, b)
+    '''
+    counter = 0
+    r = 0
+    b = 0
+    g = 0
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            r += img[i,j,0]
+            g += img[i,j,1]
+            b += img[i,j,2]
+            counter += 1
+    return int(r/counter), int(g/counter), int(b/counter)
 
 
 if __name__ == '__main__':
