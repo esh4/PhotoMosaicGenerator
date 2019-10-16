@@ -21,11 +21,15 @@ def timeit(method):
 
 
 class PhotoMosaicGenerator:
-    def __init__(self, img, img_path=None, grid_res=50):
+    def __init__(self, img=None, img_path=None, grid_res=50):
         self.img_path = img_path
         self.grid_res = grid_res
         self.img = img
         self.average_color_grid = []
+        if img_path:
+            self.img = cv2.imread(img_path)
+
+        self.img = cv2.resize(self.img, (2000, 2000))
 
     @timeit
     def run(self, src_colors, src_imgs):
